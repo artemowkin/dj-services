@@ -61,15 +61,21 @@ class TestCRUDServiceTests(TestCase):
 
     def test_create(self):
         data = {'title': 'new_entry'}
+        bad_data = {'field': 'value'}
         response = self.service.create(data)
+        bad_response = self.service.create(bad_data)
         self.assertIsInstance(response, Model)
+        self.assertIsInstance(bad_response, Form)
         self.assertEqual(response.title, data['title'])
 
     def test_change(self):
         data = {'title': 'new_title'}
+        bad_data = {'field': 'value'}
         response = self.service.change(data, self.entry.pk)
         self.assertIsInstance(response, Model)
         self.assertEqual(response.title, data['title'])
+        bad_response = self.service.change(bad_data, self.entry.pk)
+        self.assertIsInstance(bad_response, Form)
 
     def test_delete(self):
         self.service.delete(self.entry.pk)
