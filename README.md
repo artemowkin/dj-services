@@ -1,6 +1,7 @@
 # dj-services
 
 [![Build Status](https://travis-ci.com/artemowkin/dj-services.svg?branch=main)](https://travis-ci.com/artemowkin/dj-services)
+[![Coverage Status](https://coveralls.io/repos/github/artemowkin/dj-services/badge.svg?branch=main)](https://coveralls.io/github/artemowkin/dj-services?branch=main)
 
 Thanks to this library, you can build your business logic in beautiful
 services, not in huge views and fat models.
