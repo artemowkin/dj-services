@@ -1,7 +1,7 @@
 # dj-services
 
 Thanks to this library, you can build your business logic in beautiful
-services, and not in huge views and fat models.
+services, not in huge views and fat models.
 
 ## Summary
 
