@@ -18,5 +18,6 @@ setup(
     url='https://github.com/artemowkin/dj-services',
     keywords='django services',
     install_requires=['Django >= 3.0.0'],
+    include_package_data=True,
     packages=['djservices'],
 )
