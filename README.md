@@ -2,6 +2,7 @@
 
 [![Build Status](https://travis-ci.com/artemowkin/dj-services.svg?branch=main)](https://travis-ci.com/artemowkin/dj-services)
 [![Coverage Status](https://coveralls.io/repos/github/artemowkin/dj-services/badge.svg?branch=main)](https://coveralls.io/github/artemowkin/dj-services?branch=main)
+[![PEP8](https://img.shields.io/badge/code%20style-pep8-orange.svg)](https://www.python.org/dev/peps/pep-0008/)
 
 Thanks to this library, you can build your business logic in beautiful
 services, not in huge views and fat models.
