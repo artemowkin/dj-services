@@ -12,7 +12,6 @@ services, not in huge views and fat models.
 
   - [Getting Started](#getting-started)
   - [Runing the tests](#running-the-tests)
-  - [Deployment](#deployment)
   - [Contributing](#contributing)
   - [Versioning](#versioning)
   - [Authors](#authors)
@@ -66,10 +65,6 @@ If you want to run the tests you need to run the following command:
 ```
 $ ./manage.py test tests.base
 ```
-
-## Deployment
-
-Add additional notes about how to deploy this on a live system
 
 ## Contributing
 
