@@ -35,7 +35,8 @@ class BaseService:
     Examples
     --------
     To use this service you need to subclass it and set `model`
-    and/or `strategy_class` attributes, and add some methods:
+    and `strategy_class` if you want to use strategies in your service,
+    and add some methods:
 
     >>> class MyService(BaseService):
     ...     model = MyModel
