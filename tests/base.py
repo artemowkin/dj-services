@@ -24,6 +24,13 @@ class SimpleService(BaseService):
         return 1
 
 
+class SimpleServiceWithoutStrategy(BaseService):
+    model = Empty
+
+    def get_one(self):
+        return 1
+
+
 class TestCRUDService(CRUDService):
     model = TestModel
     form = TestForm
@@ -33,14 +40,19 @@ class BaseServiceTests(TestCase):
 
     def setUp(self):
         self.service = SimpleService()
+        self.service_without_strategy = SimpleServiceWithoutStrategy()
 
     def test_get_one(self):
         self.assertEqual(self.service.get_one(), 1)
+        self.assertEqual(self.service_without_strategy.get_one(), 1)
 
     def test_configuration(self):
         self.assertTrue(hasattr(self.service, 'model'))
+        self.assertTrue(hasattr(self.service_without_strategy, 'model'))
         self.assertTrue(hasattr(self.service, 'strategy_class'))
+        self.assertIsNone(self.service_without_strategy.strategy_class)
         self.assertEqual(self.service.model, Empty)
+        self.assertEqual(self.service_without_strategy.model, Empty)
         self.assertEqual(self.service.strategy_class, Empty)
 
 

@@ -4,7 +4,8 @@ Notes
 -----
 To use services you need to create `services.py` module in your app and
 create `BaseService` subclasses in it. Services must have `model` attribute
-and `strategy_class` if it's not setted in service class
+and `strategy_class` if it's not setted in service class and if you want
+to use strategies in your service
 
 """
 
@@ -24,7 +25,7 @@ class BaseService:
     Attributes
     ----------
     strategy_class : |BaseStrategy subclass|
-        A BaseStrategy subclass with service functionality
+        A BaseStrategy subclass with mutable functionality
     model : |Model|
         A model using in service logic
     strategy : |BaseStrategy instance|
@@ -34,7 +35,7 @@ class BaseService:
     Examples
     --------
     To use this service you need to subclass it and set `model`
-    and `strategy_class` attributes, and add some methods:
+    and/or `strategy_class` attributes, and add some methods:
 
     >>> class MyService(BaseService):
     ...     model = MyModel
@@ -63,12 +64,11 @@ class BaseService:
     model = None
 
     def __init__(self) -> None:
-        if not all((self.strategy_class, self.model)):
-            raise AttributeError(
-                "You need to set `strategy_class` and `model` attributes"
-            )
+        if not self.model:
+            raise AttributeError("You need to set `model` attribute")
 
-        self.strategy = self.strategy_class(*self._get_strategy_args())
+        if self.strategy_class:
+            self.strategy = self.strategy_class(*self._get_strategy_args())
 
     def _get_strategy_args(self) -> tuple:
         """Returns tuple with arguments for strategy constructor
