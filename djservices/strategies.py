@@ -59,6 +59,23 @@ class SimpleCRUDStrategy(BaseStrategy):
     form : |Form|
         Form strategy works with
 
+    Methods
+    -------
+    get_all()
+        Get all model entries
+    get_concrete(pk)
+        Get a concrete model entry
+    create(data)
+        Create a new model entry
+    change(data, pk)
+        Cahange a concrete model entry
+    delete(pk)
+        Delete a concrete model entry
+    get_create_form()
+        Return form for creating a new entry
+    get_change_form(pk)
+        Return form for changing a concrete entry
+
     """
 
     def __init__(self, model: Model, form: Form) -> None:
