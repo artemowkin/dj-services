@@ -4,6 +4,7 @@ python:
 install:
     - pip install pipenv
     - pipenv install --dev
+    - ./manage.py migrate
 script:
     - coverage run --source='djservices' manage.py test tests.base
 after_success:
