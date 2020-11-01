@@ -8,16 +8,6 @@
 Thanks to this library, you can build your business logic in beautiful
 services, not in huge views and fat models.
 
-## Summary
-
-  - [Getting Started](#getting-started)
-  - [Runing the tests](#running-the-tests)
-  - [Contributing](#contributing)
-  - [Versioning](#versioning)
-  - [Authors](#authors)
-  - [License](#license)
-  - [Acknowledgments](#acknowledgments)
-
 ## Getting Started
 
 Install this library using `pip`
@@ -57,6 +47,11 @@ def list_entries(request):
 ```
 
 That's all. Now you can add business logic in your service. Let's go!
+
+## Documentation
+
+You can read documentation in this repository
+[wiki](https://github.com/artemowkin/dj-services/wiki/About-this-project)
 
 ## Running the tests
 
