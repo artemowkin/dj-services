@@ -68,7 +68,7 @@ $ ./manage.py test tests.base
 
 ## Contributing
 
-Please read [CONTRIBUTING.md](https://github.com/artemowkin/dj-services/blob/main/CONTRIBUTING.md)
+Please read [CONTRIBUTING.md](https://github.com/artemowkin/dj-services/blob/0.2.0-stable/CONTRIBUTING.md)
 for details on our code
 of conduct, and the process for submitting pull requests to us.
 
@@ -89,5 +89,5 @@ who participated in this project.
 ## License
 
 This project is licensed under the
-[GNU General Public License v3.0](https://github.com/artemowkin/dj-services/blob/main/LICENSE)
+[GNU General Public License v3.0](https://github.com/artemowkin/dj-services/blob/0.2.0-stable/LICENSE)
 
