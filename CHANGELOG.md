@@ -14,7 +14,7 @@ First stable release
 
 ## [0.1.3] - 2020-10-21
 
-## Fixed
+### Fixed
 
 - Version of setuptools
 
