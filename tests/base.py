@@ -3,11 +3,15 @@ import os
 from django.db.models import Model
 from django.test import TestCase
 from django.forms import Form
+from django.contrib.auth import get_user_model
 
 from djservices import BaseService, CRUDService
 
-from testapp.models import TestModel
+from testapp.models import TestModel, TestModelWithUserField
 from testapp.forms import TestForm
+
+
+User = get_user_model()
 
 
 class Empty:
@@ -33,6 +37,11 @@ class SimpleServiceWithoutStrategy(BaseService):
 
 class TestCRUDService(CRUDService):
     model = TestModel
+    form = TestForm
+
+
+class TestCRUDServiceWithExtendedParameters(CRUDService):
+    model = TestModelWithUserField
     form = TestForm
 
 
@@ -76,6 +85,59 @@ class TestCRUDServiceTests(TestCase):
         bad_data = {'field': 'value'}
         response = self.service.create(data)
         bad_response = self.service.create(bad_data)
+        self.assertIsInstance(response, Model)
+        self.assertIsInstance(bad_response, Form)
+        self.assertEqual(response.title, data['title'])
+
+    def test_change(self):
+        data = {'title': 'new_title'}
+        bad_data = {'field': 'value'}
+        response = self.service.change(data, self.entry.pk)
+        self.assertIsInstance(response, Model)
+        self.assertEqual(response.title, data['title'])
+        bad_response = self.service.change(bad_data, self.entry.pk)
+        self.assertIsInstance(bad_response, Form)
+
+    def test_delete(self):
+        self.service.delete(self.entry.pk)
+        all_entries = self.service.get_all()
+        self.assertEqual(len(all_entries), 0)
+
+    def test_get_create_form(self):
+        form = self.service.get_create_form()
+        self.assertIsInstance(form, Form)
+
+    def test_get_change_form(self):
+        form = self.service.get_change_form(self.entry.pk)
+        self.assertIsInstance(form, Form)
+        self.assertTrue(form.is_valid())
+
+
+class TestCRUDServiceWithExtendedParametersTests(TestCase):
+
+    def setUp(self):
+        self.service = TestCRUDServiceWithExtendedParameters()
+        self.user = User.objects.create_superuser(
+            username='testuser', password='pass'
+        )
+        self.entry = TestModelWithUserField.objects.create(
+            title='test', user=self.user
+        )
+
+    def test_get_all(self):
+        all_entries = self.service.get_all(user=self.user)
+        self.assertEqual(len(all_entries), 1)
+        self.assertEqual(all_entries[0], self.entry)
+
+    def test_get_concrete(self):
+        entry = self.service.get_concrete(self.entry.pk, user=self.user)
+        self.assertEqual(entry, self.entry)
+
+    def test_create(self):
+        data = {'title': 'new_entry'}
+        bad_data = {'field': 'value'}
+        response = self.service.create(data, user=self.user)
+        bad_response = self.service.create(bad_data, user=self.user)
         self.assertIsInstance(response, Model)
         self.assertIsInstance(bad_response, Form)
         self.assertEqual(response.title, data['title'])

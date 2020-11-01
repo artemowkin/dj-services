@@ -61,11 +61,11 @@ class SimpleCRUDStrategy(BaseStrategy):
 
     Methods
     -------
-    get_all()
+    get_all(**kwargs)
         Get all model entries
-    get_concrete(pk)
+    get_concrete(pk, **kwargs)
         Get a concrete model entry
-    create(data)
+    create(data, **kwargs)
         Create a new model entry
     change(data, pk)
         Cahange a concrete model entry
@@ -82,28 +82,60 @@ class SimpleCRUDStrategy(BaseStrategy):
         super().__init__(model)
         self.form = form
 
-    def get_all(self) -> QuerySet:
-        """Returns all model entries"""
-        return self.model.objects.all()
+    def get_all(self, **kwargs) -> QuerySet:
+        """Returns all model entries
 
-    def get_concrete(self, pk: Any) -> Model:
+        Parameters
+        ----------
+        kwargs : dict
+            Extended parameters for fetching entries
+
+        Examples
+        --------
+        >>> strategy.get_all(user=request.user)
+
+        This code will return all entries of user
+
+        """
+        return self.model.objects.filter(**kwargs)
+
+    def get_concrete(self, pk: Any, **kwargs) -> Model:
         """Returns a concrete model entry
 
         Parameters
         ----------
         pk : |Any|
             Primary key of the entry
+        kwargs : dict
+            Extended parameters for fetching a concrete entry
+
+        Examples
+        --------
+        >>> strategy.get_concrete(pk=1, user=request.user)
+
+        This code will return entry of user `request.user` with pk `1`.
+        IF the entry with pk `1` refers to another user, this code will
+        raise `Http404`
 
         """
-        return get_object_or_404(self.model, pk=pk)
+        return get_object_or_404(self.model, pk=pk, **kwargs)
 
-    def create(self, data: dict) -> Any[Form, Model]:
+    def create(self, data: dict, **kwargs) -> Any[Form, Model]:
         """Creates a new model entry from `data`
 
         Parameters
         ----------
         data : |dict|
             Data from request.POST validating in form
+        kwargs : dict
+            Extended fields for creating a new entry
+
+        Examples
+        --------
+        >>> strategy.create(request.POST, user=request.user)
+
+        This code will create a new model entry with data from
+        POST parameters and with `user` field `request.user`
 
         Returns
         -------
@@ -113,7 +145,7 @@ class SimpleCRUDStrategy(BaseStrategy):
         """
         form = self.form(data)
         if form.is_valid():
-            entry = self.model.objects.create(**form.cleaned_data)
+            entry = self.model.objects.create(**form.cleaned_data, **kwargs)
             return entry
 
         return form
