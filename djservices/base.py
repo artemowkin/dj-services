@@ -28,7 +28,7 @@ class BaseService:
         A BaseStrategy subclass with mutable functionality
     model : |Model|
         A model using in service logic
-    strategy : |BaseStrategy instance|
+    self.strategy : |BaseStrategy instance|
         A BaseStrategy instance created in constructor using
         `strategy_class`
 
@@ -91,7 +91,7 @@ class CRUDService(BaseService):
     form : |Form|
         A form using in service logic basically for validating data
     strategy_class : |SimpleCRUDStrategy|
-        Default strategy with CRUD functionality
+        Strategy with CRUD functionality
 
     Methods
     -------

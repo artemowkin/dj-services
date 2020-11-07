@@ -145,6 +145,8 @@ class SimpleCRUDStrategy(BaseStrategy):
         """
         form = self.form(data)
         if form.is_valid():
+            # Don't handle exceptions because Django raises TypeError
+            # if kwargs isn't valid
             entry = self.model.objects.create(**form.cleaned_data, **kwargs)
             return entry
 
