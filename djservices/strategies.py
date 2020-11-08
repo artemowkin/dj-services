@@ -22,7 +22,7 @@ class BaseStrategy:
 
     Attributes
     ----------
-    model : |Model|
+    self.model : Model
         Model strategy works with. It's for working with DB
 
     Examples
@@ -43,6 +43,7 @@ class BaseStrategy:
     ...
     ...     def get_all(self):
     ...         return self.strategy.get_all()
+    ...
 
     """
 
@@ -50,13 +51,62 @@ class BaseStrategy:
         self.model = model
 
 
-class SimpleCRUDStrategy(BaseStrategy):
+class BaseCRUDStrategy(BaseStrategy):
 
-    """Simple strategy with CRUD functionality
+    """
+    Base abstract class for CRUD strategies. Defines a common
+    interface for CRUD strategies
+
+    Methods
+    -------
+    get_all()
+        This method is used in CRUD strategies to get all entries
+    get_concrete()
+        This method is used in CRUD strategies to get a concrete entry
+    create()
+        This method is used in CRUD strategies to create a new entry
+    change()
+        This method is used in CRUD strategies to change a concrete entry
+    delete()
+        This method is used in CRUD strategies to delete a concrete entry
+
+    Notes
+    -----
+    Each CRUD strategy must implement 4 methods:
+
+    - get_all()
+    - get_concrete()
+    - create()
+    - change()
+    - delete()
+
+    These methods implement CRUD strategy
+
+    """
+
+    def get_all(self) -> Any:
+        raise NotImplementedError
+
+    def get_concrete(self) -> Any:
+        raise NotImplementedError
+
+    def create(self) -> Any:
+        raise NotImplementedError
+
+    def change(self) -> Any:
+        raise NotImplementedError
+
+    def delete(self) -> Any:
+        raise NotImplementedError
+
+
+class FormsCRUDStrategy(BaseCRUDStrategy):
+
+    """Strategy with CRUD functionality using forms for realization
 
     Attributes
     ----------
-    form : |Form|
+    self.form : Form
         Form strategy works with
 
     Methods

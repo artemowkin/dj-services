@@ -15,7 +15,7 @@ from typing import Any
 from django.db.models import QuerySet, Model
 from django.forms import Form
 
-from .strategies import SimpleCRUDStrategy
+from .strategies import FormsCRUDStrategy, BaseCRUDStrategy, BaseStrategy
 
 
 class BaseService:
@@ -24,26 +24,26 @@ class BaseService:
 
     Attributes
     ----------
-    strategy_class : |BaseStrategy subclass|
+    strategy_class : BaseStrategy subclass
         A BaseStrategy subclass with mutable functionality
-    model : |Model|
+    model : Model
         A model using in service logic
-    self.strategy : |BaseStrategy instance|
+    self.strategy : `strategy_class` instance
         A BaseStrategy instance created in constructor using
         `strategy_class`
 
     Examples
     --------
     To use this service you need to subclass it and set `model`
-    and `strategy_class` if you want to use strategies in your service,
-    and add some methods:
+    and `strategy_class` attributes if you want to use strategies in
+    your service, and add some methods:
 
     >>> class MyService(BaseService):
     ...     model = MyModel
     ...     strategy_class = MyStrategy
     ...
-    ...     def do_something(self):
-    ...         return self.strategy.do_something()
+    ...     def do_some_logic(self, *args, **kwargs):
+    ...         return self.strategy.do_some_logic(*args, **kwargs)
     ...
 
     If arguments other than `model` must be passed to the constructor
@@ -59,10 +59,19 @@ class BaseService:
     ...         return super()._get_strategy_args() + args
     ...
 
+    Or if you want to use service without strategy you can just define
+    `model` attribute:
+
+    >>> class MyService(BaseService):
+    ...     model = MyModel
+    ...
+    ...     def do_some_logic(self):
+    ...         pass
+
     """
 
-    strategy_class = None
-    model = None
+    strategy_class: BaseStrategy = None
+    model: Model = None
 
     def __init__(self) -> None:
         if not self.model:
@@ -82,33 +91,103 @@ class BaseService:
         return (self.model,)
 
 
-class CRUDService(BaseService):
+class BaseCRUDService(BaseService):
 
-    """Service with CRUD functionality
+    """Base class for CRUD services
 
     Attributes
     ----------
-    form : |Form|
-        A form using in service logic basically for validating data
-    strategy_class : |SimpleCRUDStrategy|
-        Strategy with CRUD functionality
+    Each CRUD service must define the following attributes:
+
+    strategy_class : BaseCRUDStrategy subclass
+        Strategy class with CRUD functionality realization
+    model : Model
+        Django model service works with
 
     Methods
     -------
-    get_all(*args, **kwargs)
-        This method returns all model entries
-    get_concrete(*args, **kwargs)
-        This method returns a concrete model entry
-    create(*args, **kwargs)
-        This method creates a new model entry
-    change(*args, **kwargs)
-        This method changes a model entry
-    delete(*args, **kwargs)
-        This method deletes a model entry
+    All these methods are default for CRUD strategies. In this service
+    all these methods delegate control to strategy methods
+
+    get_all()
+        Returns all model entries
+    get_concrete()
+        Returns a concrete model entry
+    create()
+        Creates a new model entry
+    change()
+        Changes a concrete model entry
+    delete()
+        Deletes a concrete model entry
+
+    Examples
+    --------
+    If your CRUD strategy doesn't have other then default 5 methods
+    you can just subclass this class and define `strategy_class` and
+    `model` attributes:
+
+    >>> class MyCRUDService(BaseCRUDService):
+    ...     strategy_class = MyCRUDStrategy
+    ...     model = MyModel
+    ...
+
+    But if your CRUD strategy has other than default methods you need to
+    define non-default methods in your service and delegate control to
+    strategy in them
+
+    >>> class MyCRUDService(BaseCRUDService):
+    ...     strategy_class = MyCRUDStrategy
+    ...     model = MyModel
+    ...
+    ...     def do_some_logic(self, *args, **kwargs):
+    ...         return self.strategy.do_some_logic(*args, **kwargs)
+
+    """
+
+    strategy_class: BaseCRUDStrategy = None
+    model: Model = None
+
+    def __init__(self, *args, **kwargs) -> None:
+        if not self.strategy_class:
+            raise AttributeError(
+                "You need to set `strategy_class` attribute"
+            )
+
+        super().__init__(*args, **kwargs)
+
+    def get_all(self, *args, **kwargs) -> Any:
+        return self.strategy.get_all(*args, **kwargs)
+
+    def get_concrete(self, *args, **kwargs) -> Any:
+        return self.strategy.get_concrete(*args, **kwargs)
+
+    def create(self, *args, **kwargs) -> Any:
+        return self.strategy.create(*args, **kwargs)
+
+    def change(self, *args, **kwargs) -> Any:
+        return self.strategy.change(*args, **kwargs)
+
+    def delete(self, *args, **kwargs) -> Any:
+        return self.strategy.delete(*args, **kwargs)
+
+
+class CRUDService(BaseCRUDService):
+
+    """Service with CRUD functionality using `FormsCRUDStrategy`
+
+    Attributes
+    ----------
+    strategy_class : FormsCRUDStrategy
+        Strategy with CRUD functionality
+    form : |Form|
+        A form using in strategy logic for validating data
+
+    Methods
+    -------
     get_create_form(*args, **kwargs)
-        This method returns form for creating a new model entry
+        Returns form for creating a new model entry
     get_change_form(*args, **kwargs)
-        This method returns form with entry data for changing that entry
+        Returns form with entry data for changing that entry
 
     Examples
     --------
@@ -131,8 +210,8 @@ class CRUDService(BaseService):
 
     """
 
-    strategy_class = SimpleCRUDStrategy
-    form = None
+    strategy_class = FormsCRUDStrategy
+    form: Form = None
 
     def __init__(self) -> None:
         if not self.form:
@@ -146,32 +225,6 @@ class CRUDService(BaseService):
         """
         args = (self.form,)
         return super()._get_strategy_args() + args
-
-    def get_all(self, *args, **kwargs) -> QuerySet:
-        """Returns all model entries calling `get_all` strategy method"""
-        return self.strategy.get_all(*args, **kwargs)
-
-    def get_concrete(self, *args, **kwargs) -> Model:
-        """Returns a concrete model entry calling `get_concrete`
-        strategy method
-        """
-        return self.strategy.get_concrete(*args, **kwargs)
-
-    def create(self, *args, **kwargs) -> Any[Model, Form]:
-        """Creates a new model entry calling `create` strategy method"""
-        return self.strategy.create(*args, **kwargs)
-
-    def change(self, *args, **kwargs) -> Any[Model, Form]:
-        """Changes a concrete model entry calling `change`
-        strategy method
-        """
-        return self.strategy.change(*args, **kwargs)
-
-    def delete(self, *args, **kwargs) -> None:
-        """Deletes a concrete model entry calling `delete`
-        strategy method
-        """
-        return self.strategy.delete(*args, **kwargs)
 
     def get_create_form(self, *args, **kwargs) -> Form:
         """Returns form for creating a new model entry calling
