@@ -10,12 +10,11 @@ to use strategies in your service
 """
 
 from __future__ import annotations
-from typing import Any, Type
+from typing import Any
 
-from django.db.models import QuerySet, Model
 from django.forms import Form
 
-from .strategies import FormsCRUDStrategy, BaseCRUDStrategy, BaseStrategy
+from .strategies import FormsCRUDStrategy
 
 
 class BaseService:
