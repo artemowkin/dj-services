@@ -84,19 +84,19 @@ class BaseCRUDStrategy(BaseStrategy):
 
     """
 
-    def get_all(self) -> Any:
+    def get_all(self, **kwargs) -> Any:
         raise NotImplementedError
 
-    def get_concrete(self) -> Any:
+    def get_concrete(self, pk: Any, **kwargs) -> Any:
         raise NotImplementedError
 
-    def create(self) -> Any:
+    def create(self, data: dict, **kwargs) -> Any:
         raise NotImplementedError
 
-    def change(self) -> Any:
+    def change(self, data: dict, pk: Any) -> Any:
         raise NotImplementedError
 
-    def delete(self) -> Any:
+    def delete(self, pk: Any) -> Any:
         raise NotImplementedError
 
 

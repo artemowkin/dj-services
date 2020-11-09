@@ -58,7 +58,7 @@ You can read documentation in this repository
 If you want to run the tests you need to run the following command:
 
 ```
-$ ./manage.py test tests
+$ ./manage.py test
 ```
 
 ## Contributing

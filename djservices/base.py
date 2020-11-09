@@ -10,7 +10,7 @@ to use strategies in your service
 """
 
 from __future__ import annotations
-from typing import Any
+from typing import Any, Type
 
 from django.db.models import QuerySet, Model
 from django.forms import Form
@@ -70,8 +70,8 @@ class BaseService:
 
     """
 
-    strategy_class: BaseStrategy = None
-    model: Model = None
+    strategy_class = None
+    model = None
 
     def __init__(self) -> None:
         if not self.model:
@@ -144,16 +144,16 @@ class BaseCRUDService(BaseService):
 
     """
 
-    strategy_class: BaseCRUDStrategy = None
-    model: Model = None
+    strategy_class = None
+    model = None
 
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self) -> None:
         if not self.strategy_class:
             raise AttributeError(
                 "You need to set `strategy_class` attribute"
             )
 
-        super().__init__(*args, **kwargs)
+        super().__init__()
 
     def get_all(self, *args, **kwargs) -> Any:
         return self.strategy.get_all(*args, **kwargs)
@@ -211,7 +211,7 @@ class CRUDService(BaseCRUDService):
     """
 
     strategy_class = FormsCRUDStrategy
-    form: Form = None
+    form = None
 
     def __init__(self) -> None:
         if not self.form:
