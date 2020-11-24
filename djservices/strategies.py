@@ -170,7 +170,7 @@ class FormsMixin:
         Returns changed entry if data is valid, else form with errors
 
         """
-        form = self.form(data)
+        form = self.change_form(data)
         if form.is_valid():
             changing_entry = self.get_concrete(pk)
             self._change_entry_fields(form.cleaned_data, changing_entry)
@@ -185,7 +185,7 @@ class FormsMixin:
 
     def _get_form_data_from_entry(self, entry: Model) -> dict:
         """Returns dict with model entry fields and values for form"""
-        fields = self.form.base_fields.keys()
+        fields = self.change_form.base_fields.keys()
         fields_values = [getattr(entry, field) for field in fields]
         return dict(zip(fields, fields_values))
 
@@ -200,7 +200,7 @@ class FormsMixin:
         """
         changing_entry = self.get_concrete(pk)
         form_data = self._get_form_data_from_entry(changing_entry)
-        return self.form(form_data)
+        return self.change_form(form_data)
 
 
 class FormsCRUDStrategy(FormsMixin, BaseCRUDStrategy):
@@ -211,6 +211,9 @@ class FormsCRUDStrategy(FormsMixin, BaseCRUDStrategy):
     ----------
     self.form : Form
         Form strategy works with
+    self.change_form : Form
+        Form using for changing model entries. If not defined, using
+        the same form as `self.form`
 
     Methods
     -------
@@ -223,9 +226,14 @@ class FormsCRUDStrategy(FormsMixin, BaseCRUDStrategy):
 
     """
 
-    def __init__(self, model: Model, form: Form) -> None:
+    def __init__(self, model: Model, form: Form,
+                 change_form: Any[Form, None] = None) -> None:
         super().__init__(model)
         self.form = form
+        if change_form:
+            self.change_form = change_form
+        else:
+            self.change_form = form
 
     def get_all(self, **kwargs) -> QuerySet:
         """Returns all model entries

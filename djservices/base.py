@@ -180,6 +180,8 @@ class CRUDService(BaseCRUDService):
         Strategy with CRUD functionality
     form : |Form|
         A form using in strategy logic for validating data
+    change_form : |Form|
+        A form using for changing entries. If not defined, using `form`
 
     Methods
     -------
@@ -211,6 +213,7 @@ class CRUDService(BaseCRUDService):
 
     strategy_class = FormsCRUDStrategy
     form = None
+    change_form = None
 
     def __init__(self) -> None:
         if not self.form:
@@ -219,10 +222,11 @@ class CRUDService(BaseCRUDService):
         super().__init__()
 
     def _get_strategy_args(self) -> tuple:
-        """Returns tuple with default attributes and `form` because `form`
-        attribute is necessary for CRUD strategies
+        """Returns tuple with default attributes, `form` and `change_form`
+        because `form` and `change_form` attributes are required
+        for CRUD strategies
         """
-        args = (self.form,)
+        args = (self.form, self.change_form)
         return super()._get_strategy_args() + args
 
     def get_create_form(self, *args, **kwargs) -> Form:
