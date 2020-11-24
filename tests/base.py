@@ -45,6 +45,12 @@ class TestCRUDServiceWithExtendedParameters(CRUDService):
     form = TestForm
 
 
+class TestCRUDServiceWithChangeForm(CRUDService):
+    model = TestModel
+    form = TestForm
+    change_form = TestForm
+
+
 class BaseServiceTests(TestCase):
 
     def setUp(self):
@@ -106,6 +112,27 @@ class TestCRUDServiceTests(TestCase):
     def test_get_create_form(self):
         form = self.service.get_create_form()
         self.assertIsInstance(form, Form)
+
+    def test_get_change_form(self):
+        form = self.service.get_change_form(self.entry.pk)
+        self.assertIsInstance(form, Form)
+        self.assertTrue(form.is_valid())
+
+
+class TestCRUDServiceWithChangeFormTests(TestCase):
+
+    def setUp(self):
+        self.service = TestCRUDServiceWithChangeForm()
+        self.entry = TestModel.objects.create(title='test')
+
+    def test_change(self):
+        data = {'title': 'new_title'}
+        bad_data = {'field': 'value'}
+        response = self.service.change(data, self.entry.pk)
+        self.assertIsInstance(response, Model)
+        self.assertEqual(response.title, data['title'])
+        bad_response = self.service.change(bad_data, self.entry.pk)
+        self.assertIsInstance(bad_response, Form)
 
     def test_get_change_form(self):
         form = self.service.get_change_form(self.entry.pk)
