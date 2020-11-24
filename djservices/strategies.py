@@ -100,75 +100,23 @@ class BaseCRUDStrategy(BaseStrategy):
         raise NotImplementedError
 
 
-class FormsCRUDStrategy(BaseCRUDStrategy):
+class FormsMixin:
 
-    """Strategy with CRUD functionality using forms for realization
-
-    Attributes
-    ----------
-    self.form : Form
-        Form strategy works with
+    """Mixin for CRUD strategies with create/update functionality
+    using forms
 
     Methods
     -------
-    get_all(**kwargs)
-        Get all model entries
-    get_concrete(pk, **kwargs)
-        Get a concrete model entry
     create(data, **kwargs)
         Create a new model entry
     change(data, pk)
         Cahange a concrete model entry
-    delete(pk)
-        Delete a concrete model entry
     get_create_form()
         Return form for creating a new entry
     get_change_form(pk)
         Return form for changing a concrete entry
 
     """
-
-    def __init__(self, model: Model, form: Form) -> None:
-        super().__init__(model)
-        self.form = form
-
-    def get_all(self, **kwargs) -> QuerySet:
-        """Returns all model entries
-
-        Parameters
-        ----------
-        kwargs : dict
-            Extended parameters for fetching entries
-
-        Examples
-        --------
-        >>> strategy.get_all(user=request.user)
-
-        This code will return all entries of user
-
-        """
-        return self.model.objects.filter(**kwargs)
-
-    def get_concrete(self, pk: Any, **kwargs) -> Model:
-        """Returns a concrete model entry
-
-        Parameters
-        ----------
-        pk : |Any|
-            Primary key of the entry
-        kwargs : dict
-            Extended parameters for fetching a concrete entry
-
-        Examples
-        --------
-        >>> strategy.get_concrete(pk=1, user=request.user)
-
-        This code will return entry of user `request.user` with pk `1`.
-        IF the entry with pk `1` refers to another user, this code will
-        raise `Http404`
-
-        """
-        return get_object_or_404(self.model, pk=pk, **kwargs)
 
     def create(self, data: dict, **kwargs) -> Any[Form, Model]:
         """Creates a new model entry from `data`
@@ -231,18 +179,6 @@ class FormsCRUDStrategy(BaseCRUDStrategy):
 
         return form
 
-    def delete(self, pk: Any) -> None:
-        """Deletes a concrete model entry with `pk`
-
-        Parameters
-        ----------
-        pk : |Any|
-            Primary key of the model entry
-
-        """
-        entry = self.get_concrete(pk)
-        entry.delete()
-
     def get_create_form(self) -> Form:
         """Returns a form to create a new model entry"""
         return self.form()
@@ -265,3 +201,78 @@ class FormsCRUDStrategy(BaseCRUDStrategy):
         changing_entry = self.get_concrete(pk)
         form_data = self._get_form_data_from_entry(changing_entry)
         return self.form(form_data)
+
+
+class FormsCRUDStrategy(FormsMixin, BaseCRUDStrategy):
+
+    """Strategy with CRUD functionality using forms for realization
+
+    Attributes
+    ----------
+    self.form : Form
+        Form strategy works with
+
+    Methods
+    -------
+    get_all(**kwargs)
+        Get all model entries
+    get_concrete(pk, **kwargs)
+        Get a concrete model entry
+    delete(pk)
+        Delete a concrete model entry
+
+    """
+
+    def __init__(self, model: Model, form: Form) -> None:
+        super().__init__(model)
+        self.form = form
+
+    def get_all(self, **kwargs) -> QuerySet:
+        """Returns all model entries
+
+        Parameters
+        ----------
+        kwargs : dict
+            Extended parameters for fetching entries
+
+        Examples
+        --------
+        >>> strategy.get_all(user=request.user)
+
+        This code will return all entries of user
+
+        """
+        return self.model.objects.filter(**kwargs)
+
+    def get_concrete(self, pk: Any, **kwargs) -> Model:
+        """Returns a concrete model entry
+
+        Parameters
+        ----------
+        pk : |Any|
+            Primary key of the entry
+        kwargs : dict
+            Extended parameters for fetching a concrete entry
+
+        Examples
+        --------
+        >>> strategy.get_concrete(pk=1, user=request.user)
+
+        This code will return entry of user `request.user` with pk `1`.
+        IF the entry with pk `1` refers to another user, this code will
+        raise `Http404`
+
+        """
+        return get_object_or_404(self.model, pk=pk, **kwargs)
+
+    def delete(self, pk: Any) -> None:
+        """Deletes a concrete model entry with `pk`
+
+        Parameters
+        ----------
+        pk : |Any|
+            Primary key of the model entry
+
+        """
+        entry = self.get_concrete(pk)
+        entry.delete()
