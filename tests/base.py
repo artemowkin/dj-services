@@ -51,12 +51,6 @@ class TestCRUDServiceWithExtendedParameters(CRUDService):
     form = TestForm
 
 
-class TestCRUDServiceWithChangeForm(CRUDService):
-    model = TestModel
-    form = TestForm
-    change_form = TestForm
-
-
 class BaseServiceTests(TestCase):
 
     def setUp(self):
