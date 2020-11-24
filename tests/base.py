@@ -40,6 +40,12 @@ class TestCRUDService(CRUDService):
     form = TestForm
 
 
+class TestCRUDServiceWithChangeForm(CRUDService):
+    model = TestModel
+    form = TestForm
+    change_form = TestForm
+
+
 class TestCRUDServiceWithExtendedParameters(CRUDService):
     model = TestModelWithUserField
     form = TestForm
