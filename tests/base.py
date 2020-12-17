@@ -8,47 +8,13 @@ from django.contrib.auth import get_user_model
 from djservices import BaseService, CRUDService
 
 from testapp.models import TestModel, TestModelWithUserField
-from testapp.forms import TestForm
+from testapp.services import (
+    Empty, SimpleService, SimpleServiceWithoutStrategy, TestCRUDService,
+    TestCRUDServiceWithChangeForm, TestCRUDServiceWithExtendedParameters
+)
 
 
 User = get_user_model()
-
-
-class Empty:
-
-    def __init__(self, *args, **kwargs):
-        pass
-
-
-class SimpleService(BaseService):
-    strategy_class = Empty
-    model = Empty
-
-    def get_one(self):
-        return 1
-
-
-class SimpleServiceWithoutStrategy(BaseService):
-    model = Empty
-
-    def get_one(self):
-        return 1
-
-
-class TestCRUDService(CRUDService):
-    model = TestModel
-    form = TestForm
-
-
-class TestCRUDServiceWithChangeForm(CRUDService):
-    model = TestModel
-    form = TestForm
-    change_form = TestForm
-
-
-class TestCRUDServiceWithExtendedParameters(CRUDService):
-    model = TestModelWithUserField
-    form = TestForm
 
 
 class BaseServiceTests(TestCase):

@@ -8,6 +8,9 @@ from .exceptions import (
     ServicesExceptionsTests,
     BaseCRUDStrategyExceptionsTests
 )
+from .views import (
+    ListViewTests, BaseGenericServiceViewTests, DetailViewTests
+)
 
 
 __all__ = [
@@ -17,4 +20,7 @@ __all__ = [
     'TestCRUDServiceWithExtendedParametersTests',
     'ServicesExceptionsTests',
     'BaseCRUDStrategyExceptionsTests',
+    'ListViewTests',
+    'DetailViewTests',
+    'BaseGenericServiceViewTests',
 ]
