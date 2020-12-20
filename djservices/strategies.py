@@ -202,7 +202,7 @@ class FormsMixin:
 
         """
         changing_entry = self.get_concrete(pk)
-        if isinstance(self.change_form, ModelForm):
+        if issubclass(self.change_form, ModelForm):
             opts = self.change_form._meta
             form_data = model_to_dict(
                 changing_entry, opts.fields, opts.exclude
