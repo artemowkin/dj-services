@@ -3,9 +3,9 @@
 Notes
 -----
 To use services you need to create `services.py` module in your app and
-create `BaseService` subclasses in it. Services must have `model` attribute
-and `strategy_class` if it's not setted in service class and if you want
-to use strategies in your service
+create `BaseService` subclasses into this. Services must have `model`
+attribute and `strategy_class` if it's not setted in service class and if
+you want to use strategies in your service
 
 """
 
