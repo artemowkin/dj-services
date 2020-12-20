@@ -11,6 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Base class for generic views: `BaseGenericServiceView`
 - Generic views: `ListView`, `DetailView`
 
+### Fixed
+
+- Changing model entries from form data in `change()` method in `FormsMixin`.
+Now `django.forms.models.construct_instance` is using to change model entries
+- Getting form data from model entries in `get_change_form()` method in
+`FormsMixin`. Now `django.forms.models.model_to_dict` is using
+
 ## [1.1.x] - 2020-11-25
 
 ### Added

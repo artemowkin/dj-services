@@ -2,6 +2,7 @@ from .base import (
     BaseServiceTests,
     TestCRUDServiceTests,
     TestCRUDServiceWithChangeFormTests,
+    TestCRUDServiceWithChangeModelFormTests,
     TestCRUDServiceWithExtendedParametersTests,
 )
 from .exceptions import (
@@ -17,6 +18,7 @@ __all__ = [
     'BaseServiceTests',
     'TestCRUDServiceTests',
     'TestCRUDServiceWithChangeFormTests',
+    'TestCRUDServiceWithChangeModelFormTests',
     'TestCRUDServiceWithExtendedParametersTests',
     'ServicesExceptionsTests',
     'BaseCRUDStrategyExceptionsTests',

@@ -1,7 +1,7 @@
 from djservices import BaseService, CRUDService
 
 from .models import TestModel, TestModelWithUserField
-from .forms import TestForm
+from .forms import TestForm, TestModelForm
 
 
 class Empty:
@@ -34,6 +34,12 @@ class TestCRUDServiceWithChangeForm(CRUDService):
     model = TestModel
     form = TestForm
     change_form = TestForm
+
+
+class TestCRUDServiceWithChangeModelForm(CRUDService):
+    model = TestModel
+    form = TestForm
+    change_form = TestModelForm
 
 
 class TestCRUDServiceWithExtendedParameters(CRUDService):

@@ -12,8 +12,9 @@ from __future__ import annotations
 from typing import Any
 
 from django.db.models import Model, QuerySet
-from django.forms import Form
+from django.forms import Form, ModelForm
 from django.shortcuts import get_object_or_404
+from django.forms.models import construct_instance, model_to_dict
 
 
 class BaseStrategy:
@@ -118,13 +119,15 @@ class FormsMixin:
 
     """
 
-    def create(self, data: dict, **kwargs) -> Any[Form, Model]:
+    def create(self, data: dict, files=None, **kwargs) -> Any[Form, Model]:
         """Creates a new model entry from `data`
 
         Parameters
         ----------
-        data : |dict|
+        data : dict
             Data from request.POST validating in form
+        files : dict
+            Files data from request.FILES. `None` by default
         kwargs : dict
             Extended fields for creating a new entry
 
@@ -141,39 +144,45 @@ class FormsMixin:
         Else returns invalid form
 
         """
-        form = self.form(data)
+        form = self.form(data, files)
         if form.is_valid():
             # Don't handle exceptions because Django raises TypeError
-            # if kwargs isn't valid
+            # if kwargs aren't valid
             entry = self.model.objects.create(**form.cleaned_data, **kwargs)
             return entry
 
         return form
 
-    def _change_entry_fields(self, data: dict, entry: Model) -> None:
-        """Changes `entry` fields using `data`"""
-        for field in data:
-            setattr(entry, field, data[field])
-
-    def change(self, data: dict, pk: Any) -> Any[Form, Model]:
+    def change(self, data: dict, pk: Any, files=None) -> Any[Form, Model]:
         """Change a model entry with `pk` from `data`
 
         Parameters
         ----------
-        data : |dict|
+        form : dict
             Data from request.POST validating in form
-        pk : |Any|
+        pk : Any
             Primary key of the model entry
+        files : dict
+            Files from request.FILES. `None` by default
 
         Returns
         -------
         Returns changed entry if data is valid, else form with errors
 
         """
-        form = self.change_form(data)
+        form = self.change_form(data, files)
         if form.is_valid():
             changing_entry = self.get_concrete(pk)
-            self._change_entry_fields(form.cleaned_data, changing_entry)
+            if isinstance(form, ModelForm):
+                opts = form._meta
+                changing_entry = construct_instance(
+                    form, changing_entry, opts.fields, opts.exclude
+                )
+            else:
+                changing_entry = construct_instance(
+                    form, changing_entry
+                )
+
             changing_entry.save()
             return changing_entry
 
@@ -182,12 +191,6 @@ class FormsMixin:
     def get_create_form(self) -> Form:
         """Returns a form to create a new model entry"""
         return self.form()
-
-    def _get_form_data_from_entry(self, entry: Model) -> dict:
-        """Returns dict with model entry fields and values for form"""
-        fields = self.change_form.base_fields.keys()
-        fields_values = [getattr(entry, field) for field in fields]
-        return dict(zip(fields, fields_values))
 
     def get_change_form(self, pk: Any) -> Form:
         """Returns a form with data from model entry with `pk`
@@ -199,7 +202,14 @@ class FormsMixin:
 
         """
         changing_entry = self.get_concrete(pk)
-        form_data = self._get_form_data_from_entry(changing_entry)
+        if isinstance(self.change_form, ModelForm):
+            opts = self.change_form._meta
+            form_data = model_to_dict(
+                changing_entry, opts.fields, opts.exclude
+            )
+        else:
+            form_data = model_to_dict(changing_entry)
+
         return self.change_form(form_data)
 
 

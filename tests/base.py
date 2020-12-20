@@ -2,7 +2,7 @@ import os
 
 from django.db.models import Model
 from django.test import TestCase
-from django.forms import Form
+from django.forms import Form, ModelForm
 from django.contrib.auth import get_user_model
 
 from djservices import BaseService, CRUDService
@@ -10,7 +10,8 @@ from djservices import BaseService, CRUDService
 from testapp.models import TestModel, TestModelWithUserField
 from testapp.services import (
     Empty, SimpleService, SimpleServiceWithoutStrategy, TestCRUDService,
-    TestCRUDServiceWithChangeForm, TestCRUDServiceWithExtendedParameters
+    TestCRUDServiceWithChangeForm, TestCRUDServiceWithExtendedParameters,
+    TestCRUDServiceWithChangeModelForm
 )
 
 
@@ -103,6 +104,27 @@ class TestCRUDServiceWithChangeFormTests(TestCase):
     def test_get_change_form(self):
         form = self.service.get_change_form(self.entry.pk)
         self.assertIsInstance(form, Form)
+        self.assertTrue(form.is_valid())
+
+
+class TestCRUDServiceWithChangeModelFormTests(TestCase):
+
+    def setUp(self):
+        self.service = TestCRUDServiceWithChangeModelForm()
+        self.entry = TestModel.objects.create(title='test')
+
+    def test_change(self):
+        data = {'title': 'new_title'}
+        bad_data = {'field': 'value'}
+        response = self.service.change(data, self.entry.pk)
+        self.assertIsInstance(response, Model)
+        self.assertEqual(response.title, data['title'])
+        bad_response = self.service.change(bad_data, self.entry.pk)
+        self.assertIsInstance(bad_response, ModelForm)
+
+    def test_get_change_form(self):
+        form = self.service.get_change_form(self.entry.pk)
+        self.assertIsInstance(form, ModelForm)
         self.assertTrue(form.is_valid())
 
 
