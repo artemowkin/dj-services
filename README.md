@@ -10,7 +10,8 @@ services, not in huge views and fat models.
 
 ## Support
 
-**This project is no longer supported because the project idea is hopeless**
+**This project is no longer supported because the project idea is hopeless.
+But this project gave me a lot of experience**
 
 ## Getting Started
 
