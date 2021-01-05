@@ -5,13 +5,16 @@ from django.test import TestCase
 from django.forms import Form, ModelForm
 from django.contrib.auth import get_user_model
 
-from djservices import BaseService, CRUDService
+from djservices import BaseService, CommonCRUDService, UserCRUDService
 
-from testapp.models import TestModel, TestModelWithUserField
+from testapp.models import (
+    TestModel, TestModelWithUserField, TestModelWithAuthorField
+)
+from testapp.forms import TestForm, TestModelForm
 from testapp.services import (
-    Empty, SimpleService, SimpleServiceWithoutStrategy, TestCRUDService,
-    TestCRUDServiceWithChangeForm, TestCRUDServiceWithExtendedParameters,
-    TestCRUDServiceWithChangeModelForm
+    Empty, SimpleService, SimpleServiceWithoutStrategy,
+    TestCommonCRUDService, TestUserCRUDService,
+    TestUserCRUDServiceWithUserFieldName
 )
 
 
@@ -38,10 +41,10 @@ class BaseServiceTests(TestCase):
         self.assertEqual(self.service.strategy_class, Empty)
 
 
-class TestCRUDServiceTests(TestCase):
+class TestCommonCRUDServiceTests(TestCase):
 
     def setUp(self):
-        self.service = TestCRUDService()
+        self.service = TestCommonCRUDService()
         self.entry = TestModel.objects.create(title='test')
 
     def test_get_all(self):
@@ -55,127 +58,138 @@ class TestCRUDServiceTests(TestCase):
 
     def test_create(self):
         data = {'title': 'new_entry'}
-        bad_data = {'field': 'value'}
-        response = self.service.create(data)
-        bad_response = self.service.create(bad_data)
-        self.assertIsInstance(response, Model)
-        self.assertIsInstance(bad_response, Form)
-        self.assertEqual(response.title, data['title'])
+        entry = self.service.create(data)
+        self.assertEqual(entry.title, data['title'])
 
     def test_change(self):
         data = {'title': 'new_title'}
-        bad_data = {'field': 'value'}
-        response = self.service.change(data, self.entry.pk)
-        self.assertIsInstance(response, Model)
-        self.assertEqual(response.title, data['title'])
-        bad_response = self.service.change(bad_data, self.entry.pk)
-        self.assertIsInstance(bad_response, Form)
+        form = TestForm(data)
+        self.assertTrue(form.is_valid())
+        entry = self.service.change(self.entry, form)
+        self.assertEqual(entry.title, data['title'])
+        all_entries = self.service.get_all()
+        self.assertEqual(len(all_entries), 1)
+        self.assertEqual(all_entries[0], entry)
+
+    def test_change_with_model_form(self):
+        data = {'title': 'new_title'}
+        form = TestModelForm(data, instance=self.entry)
+        self.assertTrue(form.is_valid())
+        entry = self.service.change(self.entry, form)
+        self.assertEqual(entry.title, data['title'])
+        all_entries = self.service.get_all()
+        self.assertEqual(len(all_entries), 1)
+        self.assertEqual(all_entries[0], entry)
 
     def test_delete(self):
-        self.service.delete(self.entry.pk)
+        self.service.delete(self.entry)
         all_entries = self.service.get_all()
         self.assertEqual(len(all_entries), 0)
 
-    def test_get_create_form(self):
-        form = self.service.get_create_form()
-        self.assertIsInstance(form, Form)
 
-    def test_get_change_form(self):
-        form = self.service.get_change_form(self.entry.pk)
-        self.assertIsInstance(form, Form)
-        self.assertTrue(form.is_valid())
-
-
-class TestCRUDServiceWithChangeFormTests(TestCase):
+class TestUserCRUDServiceTests(TestCase):
 
     def setUp(self):
-        self.service = TestCRUDServiceWithChangeForm()
-        self.entry = TestModel.objects.create(title='test')
-
-    def test_change(self):
-        data = {'title': 'new_title'}
-        bad_data = {'field': 'value'}
-        response = self.service.change(data, self.entry.pk)
-        self.assertIsInstance(response, Model)
-        self.assertEqual(response.title, data['title'])
-        bad_response = self.service.change(bad_data, self.entry.pk)
-        self.assertIsInstance(bad_response, Form)
-
-    def test_get_change_form(self):
-        form = self.service.get_change_form(self.entry.pk)
-        self.assertIsInstance(form, Form)
-        self.assertTrue(form.is_valid())
-
-
-class TestCRUDServiceWithChangeModelFormTests(TestCase):
-
-    def setUp(self):
-        self.service = TestCRUDServiceWithChangeModelForm()
-        self.entry = TestModel.objects.create(title='test')
-
-    def test_change(self):
-        data = {'title': 'new_title'}
-        bad_data = {'field': 'value'}
-        response = self.service.change(data, self.entry.pk)
-        self.assertIsInstance(response, Model)
-        self.assertEqual(response.title, data['title'])
-        bad_response = self.service.change(bad_data, self.entry.pk)
-        self.assertIsInstance(bad_response, ModelForm)
-
-    def test_get_change_form(self):
-        form = self.service.get_change_form(self.entry.pk)
-        self.assertIsInstance(form, ModelForm)
-        self.assertTrue(form.is_valid())
-
-
-class TestCRUDServiceWithExtendedParametersTests(TestCase):
-
-    def setUp(self):
-        self.service = TestCRUDServiceWithExtendedParameters()
+        self.service = TestUserCRUDService()
         self.user = User.objects.create_superuser(
-            username='testuser', password='pass'
+            username='testuser', password='testpass'
         )
         self.entry = TestModelWithUserField.objects.create(
             title='test', user=self.user
         )
 
     def test_get_all(self):
-        all_entries = self.service.get_all(user=self.user)
+        all_entries = self.service.get_all(self.user)
         self.assertEqual(len(all_entries), 1)
         self.assertEqual(all_entries[0], self.entry)
 
     def test_get_concrete(self):
-        entry = self.service.get_concrete(self.entry.pk, user=self.user)
+        entry = self.service.get_concrete(self.entry.pk, self.user)
         self.assertEqual(entry, self.entry)
 
     def test_create(self):
         data = {'title': 'new_entry'}
-        bad_data = {'field': 'value'}
-        response = self.service.create(data, user=self.user)
-        bad_response = self.service.create(bad_data, user=self.user)
-        self.assertIsInstance(response, Model)
-        self.assertIsInstance(bad_response, Form)
-        self.assertEqual(response.title, data['title'])
+        entry = self.service.create(data, self.user)
+        self.assertEqual(entry.title, data['title'])
+        self.assertEqual(entry.user, self.user)
 
     def test_change(self):
         data = {'title': 'new_title'}
-        bad_data = {'field': 'value'}
-        response = self.service.change(data, self.entry.pk)
-        self.assertIsInstance(response, Model)
-        self.assertEqual(response.title, data['title'])
-        bad_response = self.service.change(bad_data, self.entry.pk)
-        self.assertIsInstance(bad_response, Form)
+        form = TestForm(data)
+        self.assertTrue(form.is_valid())
+        entry = self.service.change(self.entry, form)
+        self.assertEqual(entry.title, data['title'])
+        self.assertEqual(entry.user, self.user)
+        all_entries = self.service.get_all(self.user)
+        self.assertEqual(len(all_entries), 1)
+        self.assertEqual(all_entries[0], entry)
+
+    def test_change_with_model_form(self):
+        data = {'title': 'new_title'}
+        form = TestModelForm(data, instance=self.entry)
+        self.assertTrue(form.is_valid())
+        entry = self.service.change(self.entry, form)
+        self.assertEqual(entry.title, data['title'])
+        self.assertEqual(entry.user, self.user)
+        all_entries = self.service.get_all(self.user)
+        self.assertEqual(len(all_entries), 1)
+        self.assertEqual(all_entries[0], entry)
 
     def test_delete(self):
-        self.service.delete(self.entry.pk)
-        all_entries = self.service.get_all()
+        self.service.delete(self.entry)
+        all_entries = self.service.get_all(self.user)
         self.assertEqual(len(all_entries), 0)
 
-    def test_get_create_form(self):
-        form = self.service.get_create_form()
-        self.assertIsInstance(form, Form)
 
-    def test_get_change_form(self):
-        form = self.service.get_change_form(self.entry.pk)
-        self.assertIsInstance(form, Form)
+class TestUserCRUDServiceWithUserFieldNameTests(TestCase):
+
+    def setUp(self):
+        self.service = TestUserCRUDServiceWithUserFieldName()
+        self.user = User.objects.create_superuser(
+            username='testuser', password='testpass'
+        )
+        self.entry = TestModelWithAuthorField.objects.create(
+            title='test', author=self.user
+        )
+
+    def test_get_all(self):
+        all_entries = self.service.get_all(self.user)
+        self.assertEqual(len(all_entries), 1)
+        self.assertEqual(all_entries[0], self.entry)
+
+    def test_get_concrete(self):
+        entry = self.service.get_concrete(self.entry.pk, self.user)
+        self.assertEqual(entry, self.entry)
+
+    def test_create(self):
+        data = {'title': 'new_entry'}
+        entry = self.service.create(data, self.user)
+        self.assertEqual(entry.title, data['title'])
+        self.assertEqual(entry.author, self.user)
+
+    def test_change(self):
+        data = {'title': 'new_title'}
+        form = TestForm(data)
         self.assertTrue(form.is_valid())
+        entry = self.service.change(self.entry, form)
+        self.assertEqual(entry.title, data['title'])
+        self.assertEqual(entry.author, self.user)
+        all_entries = self.service.get_all(self.user)
+        self.assertEqual(len(all_entries), 1)
+        self.assertEqual(all_entries[0], entry)
+
+    def test_change_with_model_form(self):
+        data = {'title': 'new_title'}
+        form = TestModelForm(data, instance=self.entry)
+        self.assertTrue(form.is_valid())
+        entry = self.service.change(self.entry, form)
+        self.assertEqual(entry.title, data['title'])
+        self.assertEqual(entry.author, self.user)
+        all_entries = self.service.get_all(self.user)
+        self.assertEqual(len(all_entries), 1)
+        self.assertEqual(all_entries[0], entry)
+
+    def test_delete(self):
+        self.service.delete(self.entry)
+        all_entries = self.service.get_all(self.user)
+        self.assertEqual(len(all_entries), 0)

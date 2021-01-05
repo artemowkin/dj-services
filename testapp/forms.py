@@ -1,6 +1,10 @@
 from django import forms
+from django.contrib.auth import get_user_model
 
 from .models import TestModel
+
+
+User = get_user_model()
 
 
 class TestModelForm(forms.ModelForm):

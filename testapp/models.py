@@ -12,3 +12,8 @@ class TestModel(models.Model):
 class TestModelWithUserField(models.Model):
     title = models.CharField(max_length=255)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+
+class TestModelWithAuthorField(models.Model):
+    title = models.CharField(max_length=255)
+    author = models.ForeignKey(User, on_delete=models.CASCADE)

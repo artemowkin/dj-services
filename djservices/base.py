@@ -10,32 +10,32 @@ you want to use strategies in your service
 """
 
 from __future__ import annotations
+
 from typing import Any
 
 from django.forms import Form
 
-from .strategies import FormsCRUDStrategy
+from .strategies import CommonCRUDStrategy, UserCRUDStrategy
 
 
 class BaseService:
-
-    """Base services class
+    """Base class for all services
 
     Attributes
     ----------
-    strategy_class : BaseStrategy subclass
+    strategy_class : BaseStrategy
         A BaseStrategy subclass with mutable functionality
     model : Model
         A model using in service logic
-    self.strategy : `strategy_class` instance
+    self.strategy : strategy_class instance
         A BaseStrategy instance created in constructor using
-        `strategy_class`
+        strategy_class
 
     Examples
     --------
-    To use this service you need to subclass it and set `model`
-    and `strategy_class` attributes if you want to use strategies in
-    your service, and add some methods:
+    To use this service you need to subclass it and set model
+    and strategy_class attributes if you want to use strategies in
+    your service:
 
     >>> class MyService(BaseService):
     ...     model = MyModel
@@ -46,26 +46,27 @@ class BaseService:
     ...
 
     If arguments other than `model` must be passed to the constructor
-    of your strategy you can add them to the `_get_strategy_args()` method:
+    of your strategy you can add them to the get_strategy_args() method:
 
     >>> class MyService(BaseService):
     ...     model = MyModel
     ...     strategy_class = MyStrategy
     ...     another_attribute = Something
     ...
-    ...     def _get_strategy_args(self):
+    ...     def get_strategy_init_args(self):
     ...         args = (self.another_attribute,)
-    ...         return super()._get_strategy_args() + args
+    ...         return super().get_strategy_init_args() + args
     ...
 
     Or if you want to use service without strategy you can just define
-    `model` attribute:
+    model attribute:
 
     >>> class MyService(BaseService):
     ...     model = MyModel
     ...
     ...     def do_some_logic(self):
     ...         pass
+    ...
 
     """
 
@@ -77,28 +78,29 @@ class BaseService:
             raise AttributeError("You need to set `model` attribute")
 
         if self.strategy_class:
-            self.strategy = self.strategy_class(*self._get_strategy_args())
+            self.strategy = self.strategy_class(
+                *self.get_strategy_init_args()
+            )
 
-    def _get_strategy_args(self) -> tuple:
-        """Returns tuple with arguments for strategy constructor
+    def get_strategy_init_args(self) -> tuple:
+        """Return tuple with arguments for strategy constructor
 
         Returns
         -------
-        Tuple with `model` attribute value. It's default behavior
+        Tuple with model attribute value. It's default behavior
 
         """
         return (self.model,)
 
 
 class BaseCRUDService(BaseService):
-
     """Base class for CRUD services
 
     Attributes
     ----------
     Each CRUD service must define the following attributes:
 
-    strategy_class : BaseCRUDStrategy subclass
+    strategy_class : BaseStrategy subclass
         Strategy class with CRUD functionality realization
     model : Model
         Django model service works with
@@ -121,7 +123,7 @@ class BaseCRUDService(BaseService):
 
     Examples
     --------
-    If your CRUD strategy doesn't have other then default 5 methods
+    If your CRUD strategy doesn't have other than default 5 methods
     you can just subclass this class and define `strategy_class` and
     `model` attributes:
 
@@ -170,34 +172,20 @@ class BaseCRUDService(BaseService):
         return self.strategy.delete(*args, **kwargs)
 
 
-class CRUDService(BaseCRUDService):
-
-    """Service with CRUD functionality using `FormsCRUDStrategy`
+class CommonCRUDService(BaseCRUDService):
+    """Service with CRUD functionality using CommonCRUDStrategy
 
     Attributes
     ----------
-    strategy_class : FormsCRUDStrategy
+    strategy_class : CommonCRUDStrategy
         Strategy with CRUD functionality
-    form : |Form|
-        A form using in strategy logic for validating data
-    change_form : |Form|
-        A form using for changing entries. If not defined, using `form`
-
-    Methods
-    -------
-    get_create_form(*args, **kwargs)
-        Returns form for creating a new model entry
-    get_change_form(*args, **kwargs)
-        Returns form with entry data for changing that entry
 
     Examples
     --------
-    To use this services you need to subclass it and set `model` and `form`
-    attributes:
+    To use this services you need to subclass it and set model attribute:
 
     >>> class MyService(CRUDService):
     ...     model = MyModel
-    ...     form = MyModelForm
     ...
 
     After that you can use this service in Django views. For example,
@@ -211,32 +199,44 @@ class CRUDService(BaseCRUDService):
 
     """
 
-    strategy_class = FormsCRUDStrategy
-    form = None
-    change_form = None
+    strategy_class = CommonCRUDStrategy
 
-    def __init__(self) -> None:
-        if not self.form:
-            raise AttributeError("You need to set `form` attribute")
 
-        super().__init__()
+class UserCRUDService(BaseCRUDService):
+    """Service with CRUD functionality using UserCRUDStrategy
 
-    def _get_strategy_args(self) -> tuple:
-        """Returns tuple with default attributes, `form` and `change_form`
-        because `form` and `change_form` attributes are required
-        for CRUD strategies
-        """
-        args = (self.form, self.change_form)
-        return super()._get_strategy_args() + args
+    Attributes
+    ----------
+    strategy_class : UserCRUDStrategy
+        Strategy with CRUD functionality
+    user_field_name : str
+        Name of user field in model. By default it's just user
 
-    def get_create_form(self, *args, **kwargs) -> Form:
-        """Returns form for creating a new model entry calling
-        `get_create_form` strategy method
-        """
-        return self.strategy.get_create_form(*args, **kwargs)
+    Examples
+    --------
+    To use this services you need to subclass it and set model attribute.
+    And if your model user field has other than 'user' name you can
+    define this name in user_field_name attribute:
 
-    def get_change_form(self, *args, **kwargs) -> Form:
-        """Returns form with entry data for changing that entry
-        calling `get_change_form` strategy method
-        """
-        return self.strategy.get_change_form(*args, **kwargs)
+    >>> class MyService(CRUDService):
+    ...     model = MyModel
+    ...     user_field_name = 'author'
+    ...
+
+    After that you can use this service in Django views. For example,
+    you can make Django's ListView analog:
+
+    >>> def list_view(request):
+    ...     service = MyService()
+    ...     entries = service.get_all(request.user)
+    ...     return render(request, 'entries.html', {'entries': entries})
+    ...
+
+    """
+
+    strategy_class = UserCRUDStrategy
+    user_field_name = 'user'
+
+    def get_strategy_init_args(self) -> tuple:
+        """Extend default init kwargs with user_field_name"""
+        return super().get_strategy_init_args() + (self.user_field_name,)

@@ -4,19 +4,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.2.x] - 
+## [2.0.x] - 
+
+### Deleted
+
+- `FormsCRUDStrategy`
+- `FormsMixin`
+- `CRUDService`
+- Views
+
+### Changed
+
+- Forms API is no longer used in services strategies
+- Services and strategies are no longer had `form` and `change_form` attributes
 
 ### Added
 
-- Base class for generic views: `BaseGenericServiceView`
-- Generic views: `ListView`, `DetailView`
-
-### Fixed
-
-- Changing model entries from form data in `change()` method in `FormsMixin`.
-Now `django.forms.models.construct_instance` is using to change model entries
-- Getting form data from model entries in `get_change_form()` method in
-`FormsMixin`. Now `django.forms.models.model_to_dict` is using
+- `CommonCRUDStrategy` - strategy with simple common CRUD functionality
+- `UserCRUDStrategy` - strategy with CRUD functionality using user
 
 ## [1.1.x] - 2020-11-25
 
@@ -75,4 +80,3 @@ First stable release
 
 - BaseStrategy
 - SimpleCRUDStrategy
-

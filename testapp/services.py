@@ -1,6 +1,8 @@
-from djservices import BaseService, CRUDService
+from djservices import BaseService, CommonCRUDService, UserCRUDService
 
-from .models import TestModel, TestModelWithUserField
+from .models import (
+    TestModel, TestModelWithUserField, TestModelWithAuthorField
+)
 from .forms import TestForm, TestModelForm
 
 
@@ -25,23 +27,14 @@ class SimpleServiceWithoutStrategy(BaseService):
         return 1
 
 
-class TestCRUDService(CRUDService):
+class TestCommonCRUDService(CommonCRUDService):
     model = TestModel
-    form = TestForm
 
 
-class TestCRUDServiceWithChangeForm(CRUDService):
-    model = TestModel
-    form = TestForm
-    change_form = TestForm
-
-
-class TestCRUDServiceWithChangeModelForm(CRUDService):
-    model = TestModel
-    form = TestForm
-    change_form = TestModelForm
-
-
-class TestCRUDServiceWithExtendedParameters(CRUDService):
+class TestUserCRUDService(UserCRUDService):
     model = TestModelWithUserField
-    form = TestForm
+
+
+class TestUserCRUDServiceWithUserFieldName(UserCRUDService):
+    model = TestModelWithAuthorField
+    user_field_name = 'author'

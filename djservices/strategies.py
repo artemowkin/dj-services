@@ -9,16 +9,20 @@ services in `strategy` attribute
 """
 
 from __future__ import annotations
-from typing import Any
+
+from typing import Any, Union
 
 from django.db.models import Model, QuerySet
 from django.forms import Form, ModelForm
 from django.shortcuts import get_object_or_404
 from django.forms.models import construct_instance, model_to_dict
+from django.contrib.auth import get_user_model
+
+
+User = get_user_model
 
 
 class BaseStrategy:
-
     """Base class for strategies
 
     Attributes
@@ -52,245 +56,91 @@ class BaseStrategy:
         self.model = model
 
 
-class BaseCRUDStrategy(BaseStrategy):
-
-    """
-    Base abstract class for CRUD strategies. Defines a common
-    interface for CRUD strategies
+class CommonCRUDStrategy(BaseStrategy):
+    """Strategy with common CRUD functionality
 
     Methods
     -------
     get_all()
-        This method is used in CRUD strategies to get all entries
-    get_concrete()
-        This method is used in CRUD strategies to get a concrete entry
-    create()
-        This method is used in CRUD strategies to create a new entry
-    change()
-        This method is used in CRUD strategies to change a concrete entry
-    delete()
-        This method is used in CRUD strategies to delete a concrete entry
-
-    Notes
-    -----
-    Each CRUD strategy must implement 4 methods:
-
-    - get_all()
-    - get_concrete()
-    - create()
-    - change()
-    - delete()
-
-    These methods implement CRUD strategy
-
-    """
-
-    def get_all(self, **kwargs) -> Any:
-        raise NotImplementedError
-
-    def get_concrete(self, pk: Any, **kwargs) -> Any:
-        raise NotImplementedError
-
-    def create(self, data: dict, **kwargs) -> Any:
-        raise NotImplementedError
-
-    def change(self, data: dict, pk: Any) -> Any:
-        raise NotImplementedError
-
-    def delete(self, pk: Any) -> Any:
-        raise NotImplementedError
-
-
-class FormsMixin:
-
-    """Mixin for CRUD strategies with create/update functionality
-    using forms
-
-    Methods
-    -------
-    create(data, **kwargs)
-        Create a new model entry
-    change(data, pk)
-        Cahange a concrete model entry
-    get_create_form()
-        Return form for creating a new entry
-    get_change_form(pk)
-        Return form for changing a concrete entry
-
-    """
-
-    def create(self, data: dict, files=None, **kwargs) -> Any[Form, Model]:
-        """Creates a new model entry from `data`
-
-        Parameters
-        ----------
-        data : dict
-            Data from request.POST validating in form
-        files : dict
-            Files data from request.FILES. `None` by default
-        kwargs : dict
-            Extended fields for creating a new entry
-
-        Examples
-        --------
-        >>> strategy.create(request.POST, user=request.user)
-
-        This code will create a new model entry with data from
-        POST parameters and with `user` field `request.user`
-
-        Returns
-        -------
-        If data is correct, creates an entry and returns it.
-        Else returns invalid form
-
-        """
-        form = self.form(data, files)
-        if form.is_valid():
-            # Don't handle exceptions because Django raises TypeError
-            # if kwargs aren't valid
-            entry = self.model.objects.create(**form.cleaned_data, **kwargs)
-            return entry
-
-        return form
-
-    def change(self, data: dict, pk: Any, files=None) -> Any[Form, Model]:
-        """Change a model entry with `pk` from `data`
-
-        Parameters
-        ----------
-        form : dict
-            Data from request.POST validating in form
-        pk : Any
-            Primary key of the model entry
-        files : dict
-            Files from request.FILES. `None` by default
-
-        Returns
-        -------
-        Returns changed entry if data is valid, else form with errors
-
-        """
-        form = self.change_form(data, files)
-        if form.is_valid():
-            changing_entry = self.get_concrete(pk)
-            if isinstance(form, ModelForm):
-                opts = form._meta
-                changing_entry = construct_instance(
-                    form, changing_entry, opts.fields, opts.exclude
-                )
-            else:
-                changing_entry = construct_instance(
-                    form, changing_entry
-                )
-
-            changing_entry.save()
-            return changing_entry
-
-        return form
-
-    def get_create_form(self) -> Form:
-        """Returns a form to create a new model entry"""
-        return self.form()
-
-    def get_change_form(self, pk: Any) -> Form:
-        """Returns a form with data from model entry with `pk`
-
-        Parameters
-        ----------
-        pk : |Any|
-            Primary key of the model entry
-
-        """
-        changing_entry = self.get_concrete(pk)
-        if issubclass(self.change_form, ModelForm):
-            opts = self.change_form._meta
-            form_data = model_to_dict(
-                changing_entry, opts.fields, opts.exclude
-            )
-        else:
-            form_data = model_to_dict(changing_entry)
-
-        return self.change_form(form_data)
-
-
-class FormsCRUDStrategy(FormsMixin, BaseCRUDStrategy):
-
-    """Strategy with CRUD functionality using forms for realization
-
-    Attributes
-    ----------
-    self.form : Form
-        Form strategy works with
-    self.change_form : Form
-        Form using for changing model entries. If not defined, using
-        the same form as `self.form`
-
-    Methods
-    -------
-    get_all(**kwargs)
         Get all model entries
-    get_concrete(pk, **kwargs)
+    get_concrete(pk)
         Get a concrete model entry
-    delete(pk)
+    create(form_data)
+        Create a new model entry
+    change(changing_entry, form)
+        Change a concrete model entry
+    delete(deleting_entry)
         Delete a concrete model entry
 
     """
 
-    def __init__(self, model: Model, form: Form,
-                 change_form: Any[Form, None] = None) -> None:
-        super().__init__(model)
-        self.form = form
-        if change_form:
-            self.change_form = change_form
+    def get_all(self) -> QuerySet:
+        """Return all model entries"""
+        return self.model.objects.all()
+
+    def get_concrete(self, pk: Any) -> Model:
+        """Return a concrete model entry with pk"""
+        return get_object_or_404(self.model, pk=pk)
+
+    def create(self, form_data: dict) -> Model:
+        """Create a new model entry from form_data"""
+        return self.model.objects.create(**form_data)
+
+    def change(self, changing_entry: Model, form: Form) -> Model:
+        """Change the changing_entry using form"""
+        if isinstance(form, ModelForm):
+            opts = form._meta
+            changing_entry = construct_instance(
+                form, changing_entry, opts.fields, opts.exclude
+            )
         else:
-            self.change_form = form
+            changing_entry = construct_instance(form, changing_entry)
 
-    def get_all(self, **kwargs) -> QuerySet:
-        """Returns all model entries
+        changing_entry.save()
+        return changing_entry
 
-        Parameters
-        ----------
-        kwargs : dict
-            Extended parameters for fetching entries
+    def delete(self, deleting_entry: Model) -> None:
+        """Delete a concrete model entry from deleting_entry parameter"""
+        deleting_entry.delete()
 
-        Examples
-        --------
-        >>> strategy.get_all(user=request.user)
 
-        This code will return all entries of user
+class UserCRUDStrategy(CommonCRUDStrategy):
+    """Strategy with CRUD functionality using user
 
-        """
-        return self.model.objects.filter(**kwargs)
+    Attributes
+    ----------
+    self.user_field_name : str
+        Name of user field in model. By default it's just user
 
-    def get_concrete(self, pk: Any, **kwargs) -> Model:
-        """Returns a concrete model entry
+    Methods
+    -------
+    get_all(user)
+        Get all model entries
+    get_concrete(pk, user)
+        Get a concrete model entry
+    create(form_data, user)
+        Create a new model entry
 
-        Parameters
-        ----------
-        pk : |Any|
-            Primary key of the entry
-        kwargs : dict
-            Extended parameters for fetching a concrete entry
+    """
 
-        Examples
-        --------
-        >>> strategy.get_concrete(pk=1, user=request.user)
+    def __init__(self, model, user_field_name='user'):
+        self.user_field_name = user_field_name
+        super().__init__(model)
 
-        This code will return entry of user `request.user` with pk `1`.
-        IF the entry with pk `1` refers to another user, this code will
-        raise `Http404`
+    def get_all(self, user: User) -> QuerySet:
+        """Return all user entries"""
+        user_kwarg = self._get_user_kwarg(user)
+        return self.model.objects.filter(**user_kwarg)
 
-        """
-        return get_object_or_404(self.model, pk=pk, **kwargs)
+    def get_concrete(self, pk: Any, user: User) -> Model:
+        """Return a concrete model entry with pk"""
+        user_kwarg = self._get_user_kwarg(user)
+        return get_object_or_404(self.model, pk=pk, **user_kwarg)
 
-    def delete(self, pk: Any) -> None:
-        """Deletes a concrete model entry with `pk`
+    def create(self, form_data: dict, user: User) -> Model:
+        """Create a new model entry from form_data"""
+        user_kwarg = self._get_user_kwarg(user)
+        return self.model.objects.create(**form_data, **user_kwarg)
 
-        Parameters
-        ----------
-        pk : |Any|
-            Primary key of the model entry
-
-        """
-        entry = self.get_concrete(pk)
-        entry.delete()
+    def _get_user_kwarg(self, user) -> dict:
+        return {self.user_field_name: user}

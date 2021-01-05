@@ -8,11 +8,6 @@
 Thanks to this library, you can build your business logic in beautiful
 services, not in huge views and fat models.
 
-## Support
-
-**This project is no longer supported because the project idea is hopeless.
-But this project gave me a lot of experience**
-
 ## Getting Started
 
 Install this library using `pip`
