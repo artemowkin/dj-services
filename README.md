@@ -23,12 +23,10 @@ Create `services.py` module in your Django app and create your first service
 from djservices import CRUDService
 
 from .models import MyModel
-from .forms import MyForm
 
 
 class MyService(CRUDService):
     model = MyModel
-    form = MyForm
 ```
 
 After that you can use this service in `views.py`
@@ -85,4 +83,3 @@ who participated in this project.
 
 This project is licensed under the
 [GNU General Public License v3.0](https://github.com/artemowkin/dj-services/blob/0.2.0-stable/LICENSE)
-
