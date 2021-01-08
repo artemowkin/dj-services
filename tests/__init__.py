@@ -1,4 +1,4 @@
-from .base import (
+from .services import (
     BaseServiceTests,
     TestCommonCRUDServiceTests,
     TestUserCRUDServiceTests,
