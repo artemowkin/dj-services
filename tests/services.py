@@ -28,29 +28,13 @@ class BaseServiceTests(TestCase):
         self.service = SimpleService()
         self.service_without_strategy = SimpleServiceWithoutStrategy()
 
-    def test_get_one(self):
+    def test_service_get_one(self):
         service_result = self.service.get_one()
-        without_strategy_result = self.service_without_strategy.get_one()
-
         self.assertEqual(service_result, 1)
+
+    def test_service_without_strategy_get_one(self):
+        without_strategy_result = self.service_without_strategy.get_one()
         self.assertEqual(without_strategy_result, 1)
-
-    def test_configuration(self):
-        has_service_model_attribute = hasattr(self.service, 'model')
-        has_service_without_strategy_model_attribute = hasattr(
-            self.service_without_strategy, 'model'
-        )
-        has_service_strategy_class_attribute = hasattr(
-            self.service, 'strategy_class'
-        )
-
-        self.assertTrue(has_service_model_attribute)
-        self.assertTrue(has_service_without_strategy_model_attribute)
-        self.assertTrue(has_service_strategy_class_attribute)
-        self.assertIsNone(self.service_without_strategy.strategy_class)
-        self.assertEqual(self.service.model, Empty)
-        self.assertEqual(self.service_without_strategy.model, Empty)
-        self.assertEqual(self.service.strategy_class, Empty)
 
 
 class TestCommonCRUDServiceTests(TestCase):
@@ -67,7 +51,6 @@ class TestCommonCRUDServiceTests(TestCase):
 
     def test_get_concrete(self):
         entry = self.service.get_concrete(self.entry.pk)
-
         self.assertEqual(entry, self.entry)
 
     def test_create(self):
@@ -121,19 +104,24 @@ class UserServiceTests(TestCase):
             title='test', user=self.user
         )
 
-    def test_get_all(self):
+    def test_get_all_user(self):
         all_user_entries = self.service.get_all(self.user)
-        all_bad_user_entries = self.service.get_all(self.bad_user)
 
         self.assertEqual(len(all_user_entries), 1)
         self.assertEqual(all_user_entries[0], self.entry)
-        self.assertNotIn(self.entry, all_bad_user_entries)
-        self.assertEqual(len(all_bad_user_entries), 0)
 
-    def test_get_concrete(self):
+    def test_get_all_bad_user(self):
+        all_bad_user_entries = self.service.get_all(self.bad_user)
+
+        self.assertEqual(len(all_bad_user_entries), 0)
+        self.assertNotIn(self.entry, all_bad_user_entries)
+
+    def test_get_concrete_user(self):
         entry = self.service.get_concrete(self.entry.pk, self.user)
 
         self.assertEqual(entry, self.entry)
+
+    def test_get_concrete_bad_user(self):
         with self.assertRaises(Http404):
             self.service.get_concrete(self.entry.pk, self.bad_user)
 
@@ -152,13 +140,8 @@ class UserServiceTests(TestCase):
         self.assertTrue(form.is_valid())
 
         entry = self.service.change(self.entry, form)
-        entry_user_field = getattr(entry, self.user_field_name)
-        all_entries = self.service.get_all(self.user)
 
         self.assertEqual(entry.title, data['title'])
-        self.assertEqual(entry_user_field, self.user)
-        self.assertEqual(len(all_entries), 1)
-        self.assertEqual(all_entries[0], entry)
 
     def test_change_with_model_form(self):
         data = {'title': 'new_title'}
@@ -167,18 +150,10 @@ class UserServiceTests(TestCase):
         self.assertTrue(form.is_valid())
 
         entry = self.service.change(self.entry, form)
-        entry_user_field = getattr(entry, self.user_field_name)
-        all_entries = self.service.get_all(self.user)
 
         self.assertEqual(entry.title, data['title'])
-        self.assertEqual(entry_user_field, self.user)
-        self.assertEqual(len(all_entries), 1)
-        self.assertEqual(all_entries[0], entry)
 
     def test_delete(self):
-        all_entries_before_deleting = self.service.get_all(self.user)
-        self.assertEqual(len(all_entries_before_deleting), 1)
-
         self.service.delete(self.entry)
         all_entries_after_deleting = self.service.get_all(self.user)
 
