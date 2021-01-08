@@ -4,6 +4,7 @@ from django.db.models import Model
 from django.test import TestCase
 from django.forms import Form, ModelForm
 from django.contrib.auth import get_user_model
+from django.http import Http404
 
 from djservices import BaseService, CommonCRUDService, UserCRUDService
 
@@ -94,6 +95,9 @@ class TestUserCRUDServiceTests(TestCase):
         self.user = User.objects.create_superuser(
             username='testuser', password='testpass'
         )
+        self.bad_user = User.objects.create_superuser(
+            username='testuser2', password='testpass'
+        )
         self.entry = TestModelWithUserField.objects.create(
             title='test', user=self.user
         )
@@ -102,10 +106,15 @@ class TestUserCRUDServiceTests(TestCase):
         all_entries = self.service.get_all(self.user)
         self.assertEqual(len(all_entries), 1)
         self.assertEqual(all_entries[0], self.entry)
+        all_bad_user_entries = self.service.get_all(self.bad_user)
+        self.assertNotIn(self.entry, all_bad_user_entries)
+        self.assertEqual(len(all_bad_user_entries), 0)
 
     def test_get_concrete(self):
         entry = self.service.get_concrete(self.entry.pk, self.user)
         self.assertEqual(entry, self.entry)
+        with self.assertRaises(Http404):
+            self.service.get_concrete(self.entry.pk, self.bad_user)
 
     def test_create(self):
         data = {'title': 'new_entry'}

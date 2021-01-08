@@ -120,6 +120,8 @@ class UserCRUDStrategy(CommonCRUDStrategy):
         Get a concrete model entry
     create(form_data, user)
         Create a new model entry
+    get_user_kwarg(user)
+        Return dict with keyword argument with user
 
     """
 
@@ -129,18 +131,21 @@ class UserCRUDStrategy(CommonCRUDStrategy):
 
     def get_all(self, user: User) -> QuerySet:
         """Return all user entries"""
-        user_kwarg = self._get_user_kwarg(user)
+        user_kwarg = self.get_user_kwarg(user)
         return self.model.objects.filter(**user_kwarg)
 
     def get_concrete(self, pk: Any, user: User) -> Model:
         """Return a concrete model entry with pk"""
-        user_kwarg = self._get_user_kwarg(user)
+        user_kwarg = self.get_user_kwarg(user)
         return get_object_or_404(self.model, pk=pk, **user_kwarg)
 
     def create(self, form_data: dict, user: User) -> Model:
         """Create a new model entry from form_data"""
-        user_kwarg = self._get_user_kwarg(user)
+        user_kwarg = self.get_user_kwarg(user)
         return self.model.objects.create(**form_data, **user_kwarg)
 
-    def _get_user_kwarg(self, user) -> dict:
+    def get_user_kwarg(self, user) -> dict:
+        """Return dict in format
+        {<user_field_name_attribute>: <user_from_parameter>}
+        """
         return {self.user_field_name: user}

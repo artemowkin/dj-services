@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `CommonCRUDStrategy` - strategy with simple common CRUD functionality
 - `UserCRUDStrategy` - strategy with CRUD functionality using user
+- `get_user_kwarg` method in `UserCRUDStrategy`
 
 ## [1.1.x] - 2020-11-25
 
